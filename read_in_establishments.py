@@ -1,5 +1,6 @@
 import csv
 import pandas as pd
+from io import BytesIO
 
 def convert_excel_to_csv(excel_file):
     user_file = str(excel_file)
@@ -21,8 +22,13 @@ def convert_excel_to_csv(excel_file):
 
 def read_establishments_as_list(excel_file):
     establishments_list = []
-    csv_file = convert_excel_to_csv(excel_file)
-    df = pd.read_csv(csv_file)
+
+    #to handle streamlit upload (BytesIO)
+    if isinstance(excel_file, BytesIO):
+        df = pd.read_excel(excel_file)
+    else:
+        csv_file = convert_excel_to_csv(excel_file)
+        df = pd.read_csv(csv_file)
     
     #find row in which establishments are all on
     establishments_label = 'Establishment Name (Source)'
