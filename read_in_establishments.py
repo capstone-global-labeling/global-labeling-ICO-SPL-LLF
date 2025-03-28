@@ -21,7 +21,7 @@ def convert_excel_to_csv(excel_file):
     '''
 
 def read_establishments_as_list(excel_file):
-    establishments_list = []
+    establishments_to_addresses_map = {}
 
     #to handle streamlit upload (BytesIO)
     if isinstance(excel_file, BytesIO):
@@ -33,15 +33,25 @@ def read_establishments_as_list(excel_file):
     #find row in which establishments are all on
     establishments_label = 'Establishment Name (Source)'
     establishments_row = df[df.eq(establishments_label).any(axis=1)].index[0]
-    for source in df.iloc[establishments_row][1:]:
-        establishments_list.append(source)
 
-    return establishments_list
+    address_label = 'Establishment Address (Source)'
+    address_row = df[df.eq(address_label).any(axis=1)].index[0]
 
-#takes in list of establishments returned from read_in_establishments
-def create_search_links(establishments_list):
+    # Iterate over the columns starting from the second column (1:)
+    for col in df.columns[1:]:
+        establishment = df.at[establishments_row, col]
+        address = df.at[address_row, col]
+
+        # Ensure you only map non-empty values
+        if establishment and address:
+            establishments_to_addresses_map[establishment] = address
+
+    return establishments_to_addresses_map
+
+#takes in dictionary of establishments (mapped to each extrcted address) returned from read_in_establishments
+def create_search_links(establishments_to_addresses_map):
     links = []
-    for establishment in establishments_list:
+    for establishment in establishments_to_addresses_map.keys():
         link = format_url(establishment)
         links.append(link)
     
@@ -56,3 +66,7 @@ def format_url(establishment):
         entry = url_format + establishment
     
     return entry
+
+def get_address(establishment, establishment_to_addresses_map):
+    if establishment in establishment_to_addresses_map:
+        return establishment_to_addresses_map[establishment]
