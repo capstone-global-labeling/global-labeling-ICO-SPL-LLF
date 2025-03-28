@@ -10,6 +10,18 @@ A simple Streamlit app template for you to modify!
 
    ```
    $ pip install -r requirements.txt
+
+
+   pip install requests beautifulsoup4 pandas openpyxl
+
+   pip install selenium webdriver-manager pandas streamlit
+
+
+   python -m ensurepip --default-pip
+
+
+
+
    ```
 
 2. Run the app
