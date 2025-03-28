@@ -29,3 +29,9 @@ A simple Streamlit app template for you to modify!
    ```
    $ streamlit run streamlit_app.py
    ```
+
+3. Run the selenium script
+
+   ```
+   $ python download_file.py
+   ```
