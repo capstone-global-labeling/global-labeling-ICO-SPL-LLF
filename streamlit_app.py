@@ -3,6 +3,8 @@ import pandas as pd
 from read_in_establishments import read_establishments_as_list, create_search_links
 from io import BytesIO
 import os
+from datetime import datetime
+from scrape_data import scrape_website
 
 # Set the directory where the file will be saved
 save_directory = "scraped_links"  # Change this to the desired folder name
@@ -32,3 +34,14 @@ if uploaded_excel_file is not None:
             f.write(link + "\n")
 
     st.success(f"Links saved successfully in `{file_path}`")
+    
+    output_file = scrape_website(excel_file, links, establishments_list)
+    st.success(f"Scraped succesfully. Download result file below.")
+    output_file_name = f"{datetime.now().date()}_result_{uploaded_excel_file.name}"
+        
+    st.download_button(
+    label="Download Result",
+    data = output_file,
+    file_name= output_file_name,
+    icon=":material/download:"
+    )
