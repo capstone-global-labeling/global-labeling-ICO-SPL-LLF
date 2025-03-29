@@ -21,6 +21,7 @@ def convert_excel_to_csv(excel_file):
     '''
 
 def read_establishments_as_list(excel_file):
+    establishment_prefix_list = []
     establishments_to_addresses_map = {}
 
     #to handle streamlit upload (BytesIO)
@@ -39,6 +40,9 @@ def read_establishments_as_list(excel_file):
 
     # Iterate over the columns starting from the second column (1:)
     for col in df.columns[1:]:
+        establishment_prefix = df.at[establishments_row, col][0:3] #look up only first 3 letters of each establishment
+        establishment_prefix_list.append(establishment_prefix)
+
         establishment = df.at[establishments_row, col]
         address = df.at[address_row, col]
 
@@ -46,13 +50,13 @@ def read_establishments_as_list(excel_file):
         if establishment and address:
             establishments_to_addresses_map[establishment] = address
 
-    return establishments_to_addresses_map
+    return establishments_to_addresses_map, establishment_prefix_list
 
 #takes in dictionary of establishments (mapped to each extrcted address) returned from read_in_establishments
-def create_search_links(establishments_to_addresses_map):
+def create_search_links(establishment_prefix_list):
     links = []
-    for establishment in establishments_to_addresses_map.keys():
-        link = format_url(establishment)
+    for prefix in establishment_prefix_list:
+        link = format_url(prefix)
         links.append(link)
     
     return links
