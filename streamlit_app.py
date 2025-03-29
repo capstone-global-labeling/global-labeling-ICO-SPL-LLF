@@ -13,7 +13,7 @@ if uploaded_excel_file is not None:
     excel_file = BytesIO(uploaded_excel_file.getvalue())
 
     establishments_list = read_establishments_as_list(excel_file)
-    links = create_search_links(establishments_list)
+    links = create_search_links(establishments_list[1])
 
     st.write("Generated Links:")
     for link in links:
