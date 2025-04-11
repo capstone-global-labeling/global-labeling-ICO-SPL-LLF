@@ -2,8 +2,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from openpyxl import load_workbook
 from io import BytesIO
+from rapidfuzz import fuzz
 import pandas as pd
-from read_in_establishments import convert_excel_to_csv
+from read_in_establishments import convert_excel_to_csv, get_address
 import io
 
 def scrape_website(excel_file, links, establishments_list):
@@ -14,9 +15,7 @@ def scrape_website(excel_file, links, establishments_list):
     #Open excel file to write
     wb = load_workbook(excel_file)
 
-    indexed_dict = {index: value for index, (key, value) in enumerate(establishments_list.items())}
-
-    for line_num, link in enumerate(links, start=0):
+    for link in links:
         # Open generated file
         driver.get(link)
         
@@ -38,10 +37,13 @@ def scrape_website(excel_file, links, establishments_list):
                 business = row.find_element(By.CLASS_NAME, 'business_operations').text
                 expiration = row.find_element(By.CLASS_NAME, 'expiration_date').text
                 print(f' DUNS: {duns}, Address: {address}')  
-                
-                if (str(indexed_dict[line_num])[5:10] in address) : # Write only record that matches with address provided
-                    write_file(excel_file, wb, line_num, name, duns, business, expiration)
-                    break
+
+                for i, original_address in enumerate(establishments_list.values()):
+                    match_ratio = fuzz.partial_ratio(original_address, address)
+                    if match_ratio >= 85:
+                        print("Matched with a:", match_ratio, "for", original_address)
+                        write_file(excel_file, wb, i, name, duns, business, expiration)
+                        break
             except:
                 continue  # Skip rows that don’t match
 
