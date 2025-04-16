@@ -1,4 +1,6 @@
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from openpyxl import load_workbook
 from io import BytesIO
@@ -7,11 +9,16 @@ import pandas as pd
 from read_in_establishments import convert_excel_to_csv, get_address
 import io
 
+def get_driver():
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Optional
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    return driver
+
 def scrape_website(excel_file, links, establishments_list):
     
     # Webdriver
-    driver = webdriver.Chrome()
-
+    driver = get_driver()
     #Open excel file to write
     wb = load_workbook(excel_file)
 
