@@ -1,6 +1,6 @@
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Options
 from selenium.webdriver.common.by import By
 from openpyxl import load_workbook
 from io import BytesIO
@@ -10,9 +10,14 @@ from read_in_establishments import convert_excel_to_csv, get_address
 import io
 
 def get_driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Optional
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    options = Options()
+    options.binary_location = "/usr/bin/chromium"
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    service = Service('usr/lib/chromium/chromedriver')
+    driver = webdriver.Chrome(service=service, options=options)
     return driver
 
 def scrape_website(excel_file, links, establishments_list):
