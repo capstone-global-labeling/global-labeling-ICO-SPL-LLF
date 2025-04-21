@@ -1,22 +1,26 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.service import Options
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.os_manager import ChromeType
 from selenium.webdriver.common.by import By
 from openpyxl import load_workbook
 from io import BytesIO
 from rapidfuzz import fuzz
 import pandas as pd
-from read_in_establishments import convert_excel_to_csv, get_address
+from read_in_establishments import convert_excel_to_csv
 import io
 
 def get_driver():
     options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--no-sandbox")  # Needed for some CI environments
+    options.add_argument("--disable-dev-shm-usage")  # Prevents issues with /dev/shm size
+    options.add_argument("--disable-gpu")  # Safe for headless
+    options.add_argument("--window-size=1920,1080")  # Ensure consistent viewport
+    
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
 
-    service = Service('usr/lib/chromium/chromedriver')
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
