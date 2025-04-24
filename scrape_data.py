@@ -1,18 +1,27 @@
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.os_manager import ChromeType
 from selenium.webdriver.common.by import By
 from openpyxl import load_workbook
 from io import BytesIO
 from rapidfuzz import fuzz
 import pandas as pd
-from read_in_establishments import convert_excel_to_csv, get_address
+from read_in_establishments import convert_excel_to_csv
 import io
 
 def get_driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")  # Optional
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    options = Options()
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--no-sandbox")  # Needed for some CI environments
+    options.add_argument("--disable-dev-shm-usage")  # Prevents issues with /dev/shm size
+    options.add_argument("--disable-gpu")  # Safe for headless
+    options.add_argument("--window-size=1920,1080")  # Ensure consistent viewport
+    
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+
+    driver = webdriver.Chrome(service=service, options=options)
     return driver
 
 def scrape_website(excel_file, links, establishments_list):
