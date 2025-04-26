@@ -20,8 +20,8 @@ def convert_excel_to_csv(excel_file):
     Can set method to discard with each new query request to avoid excess overhead
     '''
 
-def read_establishments_as_list(excel_file):
-    establishments_to_addresses_map = {}
+def read_establishments_as_list(excel_file, search_param):
+    establishments_to_second_params_map = {}
 
     #to handle streamlit upload (BytesIO)
     if isinstance(excel_file, BytesIO):
@@ -34,24 +34,29 @@ def read_establishments_as_list(excel_file):
     establishments_label = 'Establishment Name (Source)'
     establishments_row = df[df.eq(establishments_label).any(axis=1)].index[0]
 
-    address_label = 'Establishment Address (Source)'
-    address_row = df[df.eq(address_label).any(axis=1)].index[0]
-
+    if search_param=="address":
+        second_param_label = 'Establishment Address (Source)'
+        second_param_row = df[df.eq(second_param_label).any(axis=1)].index[0]
+    else: 
+        second_param_label = 'DUNS (Source)'
+        second_param_row = df[df.eq(second_param_label).any(axis=1)].index[0]
+        
     # Iterate over the columns starting from the second column (1:)
     for col in df.columns[1:]:
         establishment = df.at[establishments_row, col]
-        address = df.at[address_row, col]
+        second_param = df.at[second_param_row, col]
+        print(f"debug: second_param = {second_param_row}")
 
         # Ensure you only map non-empty values
-        if establishment and address:
-            establishments_to_addresses_map[establishment] = address
+        if establishment and second_param:
+            establishments_to_second_params_map[establishment] = second_param
 
-    return establishments_to_addresses_map
+    return establishments_to_second_params_map
 
-#takes in dictionary of establishments (mapped to each extrcted address) returned from read_in_establishments
-def create_search_links(establishments_to_addresses_map):
+#takes in dictionary of establishments (mapped to each extrcted second_param) returned from read_in_establishments
+def create_search_links(establishments_to_second_parames_map):
     links = []
-    for establishment in establishments_to_addresses_map.keys():
+    for establishment in establishments_to_second_parames_map.keys():
         link = format_url(establishment)
         links.append(link)
     
@@ -67,6 +72,6 @@ def format_url(establishment):
     
     return entry
 
-def get_address(establishment, establishment_to_addresses_map):
-    if establishment in establishment_to_addresses_map:
-        return establishment_to_addresses_map[establishment]
+def get_second_param(establishment, establishment_to_second_parames_map):
+    if establishment in establishment_to_second_parames_map:
+        return establishment_to_second_parames_map[establishment]
