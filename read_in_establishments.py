@@ -63,6 +63,6 @@ def format_url(establishment):
         search_term = establishment.replace(" ", "+") # only uses substring from 5 to 3rd from last digits of name
         entry = url_format + search_term[5:-3]
     else:
-        entry = url_format + establishment
+        entry = url_format + establishment[5:-3]
     
     return entry
