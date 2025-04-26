@@ -18,10 +18,6 @@ A simple Streamlit app template for you to modify!
 
 
    python -m ensurepip --default-pip
-
-
-
-
    ```
 
 2. Run the app
@@ -34,4 +30,10 @@ A simple Streamlit app template for you to modify!
 
    ```
    $ python download_file.py
+   ```
+
+4. Run tests
+   NOTE: Automatically will find the tests directory
+   ```
+   $pytest
    ```
