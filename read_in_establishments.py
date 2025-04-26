@@ -66,7 +66,3 @@ def format_url(establishment):
         entry = url_format + establishment
     
     return entry
-
-def get_address(establishment, establishment_to_addresses_map):
-    if establishment in establishment_to_addresses_map:
-        return establishment_to_addresses_map[establishment]
