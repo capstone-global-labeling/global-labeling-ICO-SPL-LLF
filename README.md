@@ -33,6 +33,7 @@ A simple Streamlit app template for you to modify!
    ```
 
 4. Run tests
+
    NOTE: Automatically will find the tests directory
    ```
    $pytest
