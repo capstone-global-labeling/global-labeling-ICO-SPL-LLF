@@ -1,6 +1,6 @@
-import csv
 import pandas as pd
 from io import BytesIO
+import streamlit as st
 
 def convert_excel_to_csv(excel_file):
     user_file = str(excel_file)
@@ -20,8 +20,8 @@ def convert_excel_to_csv(excel_file):
     Can set method to discard with each new query request to avoid excess overhead
     '''
 
-def read_establishments_as_list(excel_file):
-    establishments_to_addresses_map = {}
+def read_establishments_as_list(excel_file, search_param):
+    establishments_to_second_params_map = {}
 
     #to handle streamlit upload (BytesIO)
     if isinstance(excel_file, BytesIO):
@@ -34,24 +34,34 @@ def read_establishments_as_list(excel_file):
     establishments_label = 'Establishment Name (Source)'
     establishments_row = df[df.eq(establishments_label).any(axis=1)].index[0]
 
-    address_label = 'Establishment Address (Source)'
-    address_row = df[df.eq(address_label).any(axis=1)].index[0]
+    if search_param == "address":
+        second_param_label = 'Establishment Address (Source)'
+    else:
+        second_param_label = 'DUNS (Source)'
 
-    # Iterate over the columns starting from the second column (1:)
-    for col in df.columns[1:]:
-        establishment = df.at[establishments_row, col]
-        address = df.at[address_row, col]
+    matching_rows = df[df.eq(second_param_label).any(axis=1)].index
 
-        # Ensure you only map non-empty values
-        if establishment and address:
-            establishments_to_addresses_map[establishment] = address
+    if matching_rows.empty:
+        st.error(f"❌ Could not find the expected field '{second_param_label}' in the Excel sheet.\nPlease ensure the sheet contains this exact label, or double-check that the correct 'Search Parameters' option has been selected!")
+    else:
+        second_param_row = matching_rows[0]
+            
+        # Iterate over the columns starting from the second column (1:)
+        for col in df.columns[1:]:
+            establishment = df.at[establishments_row, col]
+            second_param = df.at[second_param_row, col]
+            print(f"debug: second_param = {second_param_row}")
 
-    return establishments_to_addresses_map
+            # Ensure you only map non-empty values
+            if establishment and second_param:
+                establishments_to_second_params_map[establishment] = second_param
 
-#takes in dictionary of establishments (mapped to each extrcted address) returned from read_in_establishments
-def create_search_links(establishments_to_addresses_map):
+        return establishments_to_second_params_map
+
+#takes in dictionary of establishments (mapped to each extrcted second_param) returned from read_in_establishments
+def create_search_links(establishments_to_second_params_map):
     links = []
-    for establishment in establishments_to_addresses_map.keys():
+    for establishment in establishments_to_second_params_map.keys():
         link = format_url(establishment)
         links.append(link)
     
@@ -66,3 +76,7 @@ def format_url(establishment):
         entry = url_format + establishment[5:-3]
     
     return entry
+
+def get_second_param(establishment, establishment_to_second_params_map):
+    if establishment in establishment_to_second_params_map:
+        return establishment_to_second_params_map[establishment]

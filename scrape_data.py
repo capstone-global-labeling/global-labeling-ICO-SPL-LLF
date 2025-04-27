@@ -24,7 +24,7 @@ def get_driver():
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
-def scrape_website(excel_file, links, establishments_list):
+def scrape_website(excel_file, links, establishments_list, search_param):
     
     # Webdriver
     driver = get_driver()
@@ -54,12 +54,20 @@ def scrape_website(excel_file, links, establishments_list):
                 expiration = row.find_element(By.CLASS_NAME, 'expiration_date').text
                 print(f' DUNS: {duns}, Address: {address}')  
 
-                for i, original_address in enumerate(establishments_list.values()):
-                    match_ratio = fuzz.partial_ratio(original_address, address)
-                    if match_ratio >= 85:
-                        print("Matched with a:", match_ratio, "for", original_address)
-                        write_file(excel_file, wb, i, name, duns, business, expiration)
-                        break
+                if search_param == "address":
+                    for i, original_address in enumerate(establishments_list.values()):
+                        match_ratio = fuzz.partial_ratio(original_address, address)
+                        if match_ratio >= 85:
+                            print("Matched with a:", match_ratio, "for", original_address)
+                            write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
+                            break
+                elif search_param == "duns":
+                    for i, original_duns in enumerate(establishments_list.values()):
+                        match_ratio = fuzz.partial_ratio(original_duns, duns)
+                        if match_ratio >= 85:
+                            print("Matched with a:", match_ratio, "for", original_duns)
+                            write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
+                            break
             except:
                 continue  # Skip rows that don’t match
 
@@ -75,7 +83,7 @@ def scrape_website(excel_file, links, establishments_list):
     return buffer
 
 
-def write_file(excel_file, wb, count, name, duns, business, expiration):
+def write_file(excel_file, wb, count, name, duns, business, expiration, search_param):
     if isinstance(excel_file, BytesIO):
         df = pd.read_excel(excel_file)
     else:
@@ -99,8 +107,10 @@ def write_file(excel_file, wb, count, name, duns, business, expiration):
     expiration_label = 'Registration Expiration Date (DECRS)'
     expiration_row = df[df.eq(expiration_label).any(axis=1)].index[0] + 2
 
-    # Writing on "Full Query" sheet
-    wb.active = wb.sheetnames.index('Full Query') 
+    if search_param=="address":
+        wb.active = wb.sheetnames.index('Full Query') 
+    elif search_param=="duns":
+        wb.active = wb.sheetnames.index('Abbreviated Query')
     ws = wb.active
 
     ws.cell(row=name_row, column=column, value=name)
