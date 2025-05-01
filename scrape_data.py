@@ -19,7 +19,7 @@ def get_driver():
     options.add_argument("--disable-gpu")  # Safe for headless
     options.add_argument("--window-size=1920,1080")  # Ensure consistent viewport
     
-    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install())
 
     driver = webdriver.Chrome(service=service, options=options)
     return driver
