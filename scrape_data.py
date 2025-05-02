@@ -23,69 +23,79 @@ def get_driver():
     return driver
 
 @st.cache_data(ttl=3600)
-def scrape_website(excel_file, links, establishments_list, search_param):
-    
+def scrape_single_url(link):
     # Webdriver
     driver = get_driver()
-    #Open excel file to write
-    wb = load_workbook(excel_file)
+    driver.get(link)
+    driver.implicitly_wait(5)
 
-    for link in links:
-        # Open generated file
-        driver.get(link)
-        
-        # Wait for elements to load
-        driver.implicitly_wait(5)
-
-        # Display all entries (ensures we look and compare all entries NOT just the first page if we have a partial match)
+    # Display all entries (ensures we look and compare all entries NOT just the first page if we have a partial match)
+    try:
         entries_count_dropdown = driver.find_element("name", "decrs_table_length")
         select = Select(entries_count_dropdown)
         select.select_by_visible_text("All")
-        
-        # Entire table
+    except:
+        pass
+    
+    row_data = []
+
+    try:
         table = driver.find_element(By.ID, 'decrs_table')
-        
-        # Get all rows
         rows = table.find_elements(By.TAG_NAME, 'tr')
-        
-        # Extract data from each row
         for row in rows:
             try:
-                name = row.find_element(By.CLASS_NAME, 'firm_name').text
-                address = row.find_element(By.CLASS_NAME, 'decrs-address').text
-                duns = row.find_element(By.CLASS_NAME, 'duns-number').text
-                business = row.find_element(By.CLASS_NAME, 'business_operations').text
-                expiration = row.find_element(By.CLASS_NAME, 'expiration_date').text
-                #print(f'name: {name} DUNS: {duns}, Address: {address}')  
-
-                if search_param == "address":
-                    for i, original_address in enumerate(establishments_list):
-                        clean_original_address = clean_text(original_address[1])
-                        clean_scraped_address = clean_text(address)
-                        match_ratio = fuzz.token_set_ratio(clean_original_address, clean_scraped_address)
-                        if match_ratio >= 85:
-                            print("Matched with a:", match_ratio, "for", original_address[1])
-                            write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
-                            break
-                elif search_param == "duns":
-                    for i, original_duns in enumerate(establishments_list):
-                        normalized_original_duns = original_duns[1].lstrip('0')
-                        normalized_duns = duns.lstrip('0') #to handle cases where we have leading zeroes (sometimes ignored by excel sheets)
-                        #print('normalized_og_duns:', normalized_original_duns, 'normalize_duns:', normalized_duns)
-                        if normalized_original_duns == normalized_duns:
-                            write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
-                            break
+                row_data.append({
+                    'name': row.find_element(By.CLASS_NAME, 'firm_name').text,
+                    'address': row.find_element(By.CLASS_NAME, 'decrs-address').text,
+                    'duns': row.find_element(By.CLASS_NAME, 'duns-number').text,
+                    'business': row.find_element(By.CLASS_NAME, 'business_operations').text,
+                    'expiration': row.find_element(By.CLASS_NAME, 'expiration_date').text
+                })
             except:
-                continue  # Skip rows that don’t match
+                continue
+    finally:
+        driver.quit()
+    
+    print('single URL cached:', row_data)
+    return row_data
+
+def scrape_website(excel_file, links, establishments_list, search_param):
+    wb = load_workbook(excel_file) 
+    
+    for link in links:
+        results = scrape_single_url(link)
+
+        for entry in results:
+            name = entry['name']
+            address = entry['address']
+            duns = entry['duns']
+            business = entry['business']
+            expiration = entry['expiration']
+
+            if search_param == "address":
+                for i, original_address in enumerate(establishments_list):
+                    clean_original_address = clean_text(original_address[1])
+                    clean_scraped_address = clean_text(address)
+                    match_ratio = fuzz.token_set_ratio(clean_original_address, clean_scraped_address)
+                    if match_ratio >= 85:
+                        print("Matched with a:", match_ratio, "for", original_address[1])
+                        write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
+                        break
+            elif search_param == "duns":
+                for i, original_duns in enumerate(establishments_list):
+                    normalized_original_duns = original_duns[1].lstrip('0')
+                    normalized_duns = duns.lstrip('0') #to handle cases where we have leading zeroes (sometimes ignored by excel sheets)
+                    #print('normalized_og_duns:', normalized_original_duns, 'normalize_duns:', normalized_duns)
+                    if normalized_original_duns == normalized_duns:
+                        write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
+                        break
 
     # Save file
     buffer = io.BytesIO()
     wb.save(buffer)
     buffer.seek(0)
 
-    # Close file and webdriver
     wb.close()
-    driver.quit()
 
     return buffer
 
