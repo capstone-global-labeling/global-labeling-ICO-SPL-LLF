@@ -1,6 +1,7 @@
 import pandas as pd
 from io import BytesIO
 import streamlit as st
+import re
 
 def convert_excel_to_csv(excel_file):
     user_file = str(excel_file)
@@ -14,14 +15,9 @@ def convert_excel_to_csv(excel_file):
                      )
     
     return user_file_csv
-    '''
-    TO DO: Consider how these intermediary files will be stored.
-    
-    Can set method to discard with each new query request to avoid excess overhead
-    '''
 
 def read_establishments_as_list(excel_file, search_param):
-    establishments_to_second_params_map = {}
+    establishments_to_second_params_map = []
 
     #to handle streamlit upload (BytesIO)
     if isinstance(excel_file, BytesIO):
@@ -52,31 +48,31 @@ def read_establishments_as_list(excel_file, search_param):
             second_param = df.at[second_param_row, col]
             print(f"debug: second_param = {second_param_row}")
 
-            # Ensure you only map non-empty values
-            if establishment and second_param:
-                establishments_to_second_params_map[establishment] = second_param
+            # Ensure you only map non-empty values and that datatype is dynamically read from excel sheet for numbers
+            if isinstance(establishment,str) and ( isinstance(second_param, str) or isinstance(second_param, int) ):
+                establishments_to_second_params_map.append([establishment, str(second_param)])
 
+        print("establishments map:", establishments_to_second_params_map)
         return establishments_to_second_params_map
 
 #takes in dictionary of establishments (mapped to each extrcted second_param) returned from read_in_establishments
 def create_search_links(establishments_to_second_params_map):
     links = []
-    for establishment in establishments_to_second_params_map.keys():
-        link = format_url(establishment)
+    for establishment in establishments_to_second_params_map: #format: [establishment_name, address/duns]
+        link = format_url(establishment[0])
         links.append(link)
     
     return links
 
 def format_url(establishment):
     url_format = "https://dps.fda.gov/decrs/searchresult?type="
-    if " " in establishment:
-        search_term = establishment.replace(" ", "+") # only uses substring from 5 to 3rd from last digits of name
-        entry = url_format + search_term[5:-3]
-    else:
-        entry = url_format + establishment[5:-3]
+    entry = url_format + str(establishment)[:3] #use first 3 letters of establishment
     
     return entry
 
-def get_second_param(establishment, establishment_to_second_params_map):
-    if establishment in establishment_to_second_params_map:
-        return establishment_to_second_params_map[establishment]
+#Helper function which removes all special characters(including newlines) except spaces and alphanumeric characters
+def clean_text(text):
+    text = text.replace('\n', ' ')
+    cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    cleaned = cleaned.lower()
+    return cleaned
