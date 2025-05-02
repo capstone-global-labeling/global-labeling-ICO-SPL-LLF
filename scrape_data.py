@@ -73,7 +73,7 @@ def scrape_website(excel_file, links, establishments_list, search_param):
                     for i, original_duns in enumerate(establishments_list):
                         normalized_original_duns = original_duns[1].lstrip('0')
                         normalized_duns = duns.lstrip('0') #to handle cases where we have leading zeroes (sometimes ignored by excel sheets)
-                        print('normalized_og_duns:', normalized_original_duns, 'normalize_duns:', normalized_duns)
+                        #print('normalized_og_duns:', normalized_original_duns, 'normalize_duns:', normalized_duns)
                         if normalized_original_duns == normalized_duns:
                             write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
                             break

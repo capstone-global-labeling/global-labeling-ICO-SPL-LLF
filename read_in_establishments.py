@@ -50,7 +50,7 @@ def read_establishments_as_list(excel_file, search_param):
         for col in df.columns[1:]:
             establishment = df.at[establishments_row, col]
             second_param = df.at[second_param_row, col]
-            print(f"debug: second_param = {second_param_row}")
+            #print(f"debug: second_param = {second_param_row}")
 
             # Ensure you only map non-empty values and that datatype is dynamically read from excel sheet for numbers
             if isinstance(establishment,str) and ( isinstance(second_param, str) or isinstance(second_param, int) ):
