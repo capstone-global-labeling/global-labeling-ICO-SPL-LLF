@@ -6,6 +6,12 @@ import os
 from datetime import datetime
 from scrape_data import scrape_website
 
+st.set_page_config(
+    page_title="Merck Global Labeling",
+    page_icon="images/MRK.png",
+    layout="centered"
+)
+
 # Set the directory where the file will be saved
 save_directory = "scraped_links"  # Change this to the desired folder name
 os.makedirs(save_directory, exist_ok=True)  # Create folder if it does not exist
