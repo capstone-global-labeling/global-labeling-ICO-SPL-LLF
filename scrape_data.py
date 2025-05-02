@@ -4,11 +4,12 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.os_manager import ChromeType
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 from openpyxl import load_workbook
 from io import BytesIO
 from rapidfuzz import fuzz
 import pandas as pd
-from read_in_establishments import convert_excel_to_csv
+from read_in_establishments import convert_excel_to_csv, clean_text
 import io
 
 def get_driver():
@@ -37,6 +38,11 @@ def scrape_website(excel_file, links, establishments_list, search_param):
         
         # Wait for elements to load
         driver.implicitly_wait(5)
+
+        # Display all entries (ensures we look and compare all entries NOT just the first page if we have a partial match)
+        entries_count_dropdown = driver.find_element("name", "decrs_table_length")
+        select = Select(entries_count_dropdown)
+        select.select_by_visible_text("All")
         
         # Entire table
         table = driver.find_element(By.ID, 'decrs_table')
@@ -52,20 +58,23 @@ def scrape_website(excel_file, links, establishments_list, search_param):
                 duns = row.find_element(By.CLASS_NAME, 'duns-number').text
                 business = row.find_element(By.CLASS_NAME, 'business_operations').text
                 expiration = row.find_element(By.CLASS_NAME, 'expiration_date').text
-                print(f' DUNS: {duns}, Address: {address}')  
+                #print(f'name: {name} DUNS: {duns}, Address: {address}')  
 
                 if search_param == "address":
-                    for i, original_address in enumerate(establishments_list.values()):
-                        match_ratio = fuzz.partial_ratio(original_address, address)
+                    for i, original_address in enumerate(establishments_list):
+                        clean_original_address = clean_text(original_address[1])
+                        clean_scraped_address = clean_text(address)
+                        match_ratio = fuzz.token_set_ratio(clean_original_address, clean_scraped_address)
                         if match_ratio >= 85:
-                            print("Matched with a:", match_ratio, "for", original_address)
+                            print("Matched with a:", match_ratio, "for", original_address[1])
                             write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
                             break
                 elif search_param == "duns":
-                    for i, original_duns in enumerate(establishments_list.values()):
-                        match_ratio = fuzz.partial_ratio(original_duns, duns)
-                        if match_ratio >= 85:
-                            print("Matched with a:", match_ratio, "for", original_duns)
+                    for i, original_duns in enumerate(establishments_list):
+                        normalized_original_duns = original_duns[1].lstrip('0')
+                        normalized_duns = duns.lstrip('0') #to handle cases where we have leading zeroes (sometimes ignored by excel sheets)
+                        print('normalized_og_duns:', normalized_original_duns, 'normalize_duns:', normalized_duns)
+                        if normalized_original_duns == normalized_duns:
                             write_file(excel_file, wb, i, name, duns, business, expiration, search_param)
                             break
             except:
