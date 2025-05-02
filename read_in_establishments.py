@@ -28,7 +28,11 @@ def read_establishments_as_list(excel_file, search_param):
     
     #find row in which establishments are all on
     establishments_label = 'Establishment Name (Source)'
-    establishments_row = df[df.eq(establishments_label).any(axis=1)].index[0]
+    try:
+        establishments_row = df[df.eq(establishments_label).any(axis=1)].index[0]
+    except IndexError:
+        st.error(f"❌ Could not find the header '{establishments_label}' in the file.")
+        return []
 
     if search_param == "address":
         second_param_label = 'Establishment Address (Source)'
