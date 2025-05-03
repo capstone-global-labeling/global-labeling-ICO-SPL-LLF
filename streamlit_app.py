@@ -6,28 +6,40 @@ import os
 from datetime import datetime
 from scrape_data import scrape_website
 
+st.set_page_config(
+    page_title="Merck Global Labeling",
+    page_icon="images/MRK.png",
+    layout="centered"
+)
+
 # Set the directory where the file will be saved
 save_directory = "scraped_links"  # Change this to the desired folder name
 os.makedirs(save_directory, exist_ok=True)  # Create folder if it does not exist
 
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image("images/MRK.svg", width=100)
+with col2:
+    st.title("Global Labeling ICO SPL LLF Project")
+
 # Define the file path
 file_path = os.path.join(save_directory, "generated_links.txt")
 
-st.title("🎈 Global Labeling ICO SPL LLF Project")
-
-search_choice = st.radio(
-        "Select Search Parameters:",
-        ("Establishment Name and Address", "Establishment Name and DUNS")
+st.html("   <div style='font-size:18px; font-weight:bold; margin-bottom:-200px;'>\n\nSelect Search Parameters:")
+search_choice = st.radio("Select Search Parameters:",
+        ("Establishment Name and Address", "Establishment Name and DUNS"),
+        label_visibility="hidden"
     )
 search_param = "address" if search_choice == "Establishment Name and Address" else "duns"
 
-uploaded_excel_file = st.file_uploader("Upload an Excel file:", type=["xlsx"])
+st.html("<div style='font-size:18px; font-weight:bold; margin-bottom:-200px;'>Upload an Excel file:")
+uploaded_excel_file = st.file_uploader(" ", type=["xlsx"])
 
 if uploaded_excel_file is not None:
     excel_file = BytesIO(uploaded_excel_file.getvalue())
 
     establishments_list = read_establishments_as_list(excel_file, search_param)
-    if establishments_list is not None: 
+    if establishments_list is not None and len(establishments_list) > 0: 
         links = create_search_links(establishments_list)
 
         # Display generated links
@@ -52,3 +64,5 @@ if uploaded_excel_file is not None:
         file_name= output_file_name,
         icon=":material/download:"
         )
+    else:
+        st.error("❌ No links were generated from your Excel file. Please ensure that the correct format for all fields is being followed and that your file contains at least 1 establishment.")
